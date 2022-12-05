@@ -1,117 +1,138 @@
+import { RoleService } from './../services/role.service';
+import { RoleModel } from './../models/role-model';
+import { CustomerModel } from './../models/customer-model';
+import { CustomerService } from './../services/customer.service';
+import { UserService } from './../services/user.service';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { EmployeeModel } from '../models/employee-model';
-import { ApiService } from '../services/api.service';
 import * as moment from 'moment';
-
 
 @Component({
   selector: 'app-emp-dashboard',
   templateUrl: './emp-dashboard.component.html',
-  styleUrls: ['./emp-dashboard.component.css']
+  styleUrls: ['./emp-dashboard.component.css'],
 })
 export class EmpDashboardComponent implements OnInit {
-
-  formValue!:FormGroup;
-  employeeModelObj:EmployeeModel=new EmployeeModel();
-  employeeData!:any;
-
+  formValue: FormGroup;
+  employeeModelObj: EmployeeModel;
+  employeeData!: any;
+  roleList: RoleModel[];
+  rowId: string;
+  updatedData: EmployeeModel;
+  customerList: CustomerModel[];
   showAdd!: boolean;
   showUpdate!: boolean;
-  constructor(private formbuilder:FormBuilder,private api:ApiService) { }
+  constructor(
+    private formbuilder: FormBuilder,
+    private user: UserService,
+    private customer: CustomerService,
+    private role: RoleService
+  ) {}
 
   ngOnInit(): void {
-    this.formValue=this.formbuilder.group({
-      firstName:[''],
-      middleName:[''],
-      lastName:[''],
-      email:[''],
-      phoneNumber:[''],
-      Role:[''],
-      Address:[''],
-      Doj:['']
-    })
+    this.formValue = this.formbuilder.group({
+      firstName: [''],
+      middleName: [''],
+      lastName: [''],
+      email: [''],
+      phoneNumber: [''],
+      address: [''],
+      roleId: [''],
+      customerId: [''],
+    });
     this.getAllEmployee();
+    this.customer.getCustomer().subscribe((data) => {
+      this.customerList = data;
+      console.log(this.customerList);
+    });
+    this.role.getRole().subscribe((data) => {
+      this.roleList = data;
+    });
   }
-  clickAddEmployee(){
+
+  clickAddEmployee() {
     this.formValue.reset();
-    this.showAdd=true;
-    this.showUpdate=false;
+    this.showAdd = true;
+    this.showUpdate = false;
   }
 
-  postEmployeeDetails(){
-    this.employeeModelObj.firstName=this.formValue.value.firstName;
-    this.employeeModelObj.middleName=this.formValue.value.middleName;
-    this.employeeModelObj.lastName=this.formValue.value.lastName;
-    this.employeeModelObj.email=this.formValue.value.email;
-    this.employeeModelObj.phoneNumber=this.formValue.value.phoneNumber;
-    this.employeeModelObj.Role=this.formValue.value.Role;
-    this.employeeModelObj.Address=this.formValue.value.Address;
-    this.employeeModelObj.Doj=moment().format('LLL');
-    
+  onSubmit(): void {
+    if (this.formValue.status === 'INVALID') {
+      this.showAdd = true;
+      return;
+    } else {
+      this.showAdd = false;
+      let roleid: RoleModel;
+      this.role.getRole().subscribe((response) => {
+        response.map((data) => {
+          console.log(data);
+          if (data.name == this.formValue.value.roleId) {
+            roleid = data.id;
+          }
+        });
+        let userFormData = this.formValue.value;
+        // userFormData['roleId']=roleid;
+        console.log(userFormData);
+        this.user.postEmployee(userFormData).subscribe(
+          (res) => {
+            alert('Employee added Successfully');
+            let ref = document.getElementById('cancel');
+            ref?.click();
+            this.formValue.reset();
+            this.getAllEmployee();
+          },
+          (err) => {
+            console.log(err);
+            alert(err);
+          }
+        );
+      });
+    }
+  }
 
-    this.api.postEmployee(this.employeeModelObj)
-    .subscribe(res=>{
+  getAllEmployee() {
+    this.user.getEmployee().subscribe((res) => {
       console.log(res);
-      alert('Employee added Successfully');
-      let ref=document.getElementById('cancel');
-      ref?.click()
-      this.formValue.reset();
-      this.getAllEmployee();
-    },
-    err=>{
-      alert('Something went Wrong');
-    })
-  }
-  
-  getAllEmployee(){
-    this.api.getEmployee()
-    .subscribe(res=>{
-      console.log(res);
-      this.employeeData=res;
-    })
+      this.employeeData = res;
+    });
   }
 
-  deleteEmployee(row:any){
-    this.api.deleteEmployee(row.id)
-    .subscribe(res=>{
-      alert("Employee Deleted Successfully");
+  deleteEmployee(row: any) {
+    this.user.deleteEmployee(row.id).subscribe((res) => {
+      alert('Employee Deleted Successfully');
       this.getAllEmployee();
-    })
+    });
   }
-  onEdit(row : any){
-    this.showAdd=false;
-    this.showUpdate=true;
-    this.employeeModelObj.id=row.id;
-    this.formValue.controls['firstName'].setValue(row.firstname);
-    this.formValue.controls['middleName'].setValue(row.middlename);
-    this.formValue.controls['lastName'].setValue(row.lastname);
+
+  onEdit(row: any) {
+    this.showAdd = false;
+    this.showUpdate = true;
+    this.rowId = row.id;
+    this.formValue.controls['firstName'].setValue(row.firstName);
+    this.formValue.controls['middleName'].setValue(row.middleName);
+    this.formValue.controls['lastName'].setValue(row.lastName);
     this.formValue.controls['email'].setValue(row.email);
-    this.formValue.controls['phoneNumber'].setValue(row.phonenumber);
-    this.formValue.controls['Role'].setValue(row.role);
-    this.formValue.controls['Address'].setValue(row.address);
-
+    this.formValue.controls['phoneNumber'].setValue(row.phoneNumber);
+    this.formValue.controls['address'].setValue(row.address);
+    this.formValue.controls['roleId'].setValue(row.roleId);
+    this.formValue.controls['customerId'].setValue(row.customerId);
+    this.updatedData = this.formValue.value;
   }
 
-  updateEmployeeDetails(){
-    this.employeeModelObj.firstName=this.formValue.value.firstName;
-    this.employeeModelObj.middleName=this.formValue.value.middleName;
-    this.employeeModelObj.lastName=this.formValue.value.lastName;
-    this.employeeModelObj.email=this.formValue.value.email;
-    this.employeeModelObj.phoneNumber=this.formValue.value.phoneNumber;
-    this.employeeModelObj.Role=this.formValue.value.Role;
-    this.employeeModelObj.Address=this.formValue.value.Address;
-    
-    this.api.updateEmployee(this.employeeModelObj,this.employeeModelObj.id)
-    .subscribe(res=>{
-      alert("Update Successfully");
+  updateEmployeeDetails() {
+    this.updatedData.firstName = this.formValue.value.firstName;
+    this.updatedData.middleName = this.formValue.value.middleName;
+    this.updatedData.lastName = this.formValue.value.lastName;
+    this.updatedData.email = this.formValue.value.email;
+    let num = this.formValue.value.phoneNumber;
+    this.updatedData.phoneNumber = +num;
+    this.updatedData.address = this.formValue.value.address;
+    this.updatedData.roleId = this.formValue.value.roleId;
+    this.updatedData.customerId = this.formValue.value.customerId;
+    this.user.updateEmployee(this.updatedData, this.rowId).subscribe((res) => {
+      alert('Update Successfully');
       this.getAllEmployee();
-    })
+    });
   }
-
-
-
-
-
-
 }

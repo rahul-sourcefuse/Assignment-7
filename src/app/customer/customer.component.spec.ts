@@ -1,31 +1,30 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import { RouterTestingModule } from '@angular/router/testing';
-import { CookieModule } from 'ngx-cookie';
+import { ActivatedRoute } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { EmpDashboardComponent } from './emp-dashboard.component';
+import { CustomerComponent } from './customer.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ActivatedRoute } from '@angular/router';
+import { CookieModule } from 'ngx-cookie';
 
-describe('EmpDashboardComponent', () => {
-  let component: EmpDashboardComponent;
-  let fixture: ComponentFixture<EmpDashboardComponent>;
+describe('CustomerComponent', () => {
+  let component: CustomerComponent;
+  let fixture: ComponentFixture<CustomerComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ EmpDashboardComponent ],
-      imports:[CookieModule.withOptions(),
+      declarations: [ CustomerComponent ],
+      imports:[
         RouterTestingModule,
         HttpClientTestingModule,
         BrowserModule,
         ReactiveFormsModule,
-        FormsModule]
+        FormsModule,CookieModule.withOptions()]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(EmpDashboardComponent);
+    fixture = TestBed.createComponent(CustomerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -33,4 +32,7 @@ describe('EmpDashboardComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+  // it('')
+
+  
 });
